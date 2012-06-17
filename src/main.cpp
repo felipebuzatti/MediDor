@@ -8,6 +8,8 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/video/video.hpp>
 
+#include "kalman_sfm.hpp"
+
 using namespace std;
 using namespace cv;
 
@@ -31,12 +33,15 @@ string mainWindow;
 VideoCapture capture;
 Mat imgFrame;
 Mat measurements;
+Mat cameraMatrix;
 vector<Mat> capturedImages;
 Mat firstImg;
 Point p1, p2, p3, p4;
 int pointNo;
 int windowWidth, windowHeight;
 double lastTime;
+double knownDistance;
+double dist;
 bool finished;
 bool hasOpticalFlow;
 char key;
@@ -90,9 +95,13 @@ void setUp()
 	namedWindow(mainWindow);
 	setMouseCallback( mainWindow, onMouse, 0 );
 
+	// Initialize Camera Matrix and Known Distance
+	cameraMatrix = *(Mat_<float>(3,3) << 555.52, 0, 314.91, 0, 556.06, 248.01, 0, 0, 1);
+	knownDistance = 40.0;
+
 	// Open video feed
-    //capture = VideoCapture("http://192.168.1.104:8080/videofeed");
-    capture = VideoCapture(0);
+    capture = VideoCapture("http://192.168.1.104:8080/videofeed");
+    //capture = VideoCapture(0);
     if (!capture.isOpened()) exit(1);
 }
 
@@ -160,13 +169,13 @@ void processFrame(Mat frame) {
 		}
 		else {
 			showInstruction("Computing Optical flow.");
-			imshow(mainWindow, imgFrame);
+			//imshow(mainWindow, imgFrame);
 
 			// Compute the measurements
-			vector<Point> prevPoints;
+			vector<Point2f> prevPoints;
 			for (int i = 0; i < capturedImages.size(); ++i) {
 				if (i == 0) {
-					int points[] = {p1.x, p1.y,  p2.x, p2.y,  p3.x, p3.y,  p4.x, p4.y};
+					float points[] = {p1.x, p1.y,  p2.x, p2.y,  p3.x, p3.y,  p4.x, p4.y};
 					measurements = Mat(8, MAX_FRAMES, CV_32F);
 					measurements.col(0) = Mat(8, 1, CV_32F, points);
 					prevPoints.push_back(p1);
@@ -177,22 +186,37 @@ void processFrame(Mat frame) {
 				else {
 					Mat statusMat = Mat();
 					Mat errMat = Mat();
-					vector<Point> newPoints;
+					vector<Point2f> newPoints;
 					calcOpticalFlowPyrLK(capturedImages[i-1], capturedImages[i], prevPoints, newPoints, statusMat, errMat);
+
 					if( sum(statusMat)[0] == prevPoints.size() ) {
-						int points[] = {newPoints[0].x, newPoints[0].y,  newPoints[1].x, newPoints[1].y,  newPoints[2].x, newPoints[2].y,  newPoints[3].x, newPoints[3].y};
+						float points[] = {newPoints[0].x, newPoints[0].y,  newPoints[1].x, newPoints[1].y,  newPoints[2].x, newPoints[2].y,  newPoints[3].x, newPoints[3].y};
+						measurements.col(i) = Mat(8, 1, CV_32F, points);
+						cout << "Image "<< i << " OK." << endl;
+						for (int j = 0; j < newPoints.size(); ++j) {
+							cvtColor(capturedImages[i], imgFrame, COLOR_GRAY2RGBA, 4);
+							line(imgFrame, prevPoints[j], newPoints[j], Scalar(0, 200, 200, 1));
+							imshow(mainWindow, imgFrame);
+							waitKey(50);
+						}
+
 						prevPoints = newPoints;
 					}
 				}
 			}
+			dist = recoverDistance(measurements, cameraMatrix, knownDistance);
 
 			currentState = State::SHOWING;
 		}
-		//showInstruction("Press N to continue.");
-
 	}
+	// Show the result
 	else if (currentState == State::SHOWING) {
-		capturedImages[MAX_FRAMES/2].copyTo(imgFrame);
+		firstImg.copyTo(imgFrame);
+		Point p1p = Point(measurements.at<float>(0,0), measurements.at<float>(1,0));
+		Point p2p = Point(measurements.at<float>(2,0), measurements.at<float>(3,0));
+		line(imgFrame, p3, p4, Scalar(0, 0, 200), 1);
+		string text = "Distance: " + convertDouble(dist) + "mm. Press Q to quit.";
+		showInstruction(text);
 	}
 
     key = waitKey(50);

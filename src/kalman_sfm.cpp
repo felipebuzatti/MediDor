@@ -1,6 +1,9 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/video/tracking.hpp>
 
+#include <iostream>
+using namespace std;
+
 #include "kalman_sfm.hpp"
 
 using namespace cv;
@@ -44,6 +47,9 @@ double recoverDistance(Mat pixelPositions, Mat cameraMatrix, double baseline) {
 	double distPredictedBaseline = getDistance(prediction, 0, 1);
 	double distPredicted = getDistance(prediction, 2, 3);
 	double adjustedDistance = distPredicted * baseline/distPredictedBaseline;
+
+	cout << "Predicted: " << distPredicted << endl;
+	cout << "Predicted Baseline: " << distPredictedBaseline << endl;
 
 	return adjustedDistance;
 }
