@@ -51,6 +51,24 @@ double recoverDistance(Mat pixelPositions, Mat cameraMatrix, double baseline) {
 	cout << "Predicted: " << distPredicted << endl;
 	cout << "Predicted Baseline: " << distPredictedBaseline << endl;
 
+	double p1x = prediction.at<float>(0)*prediction.at<float>(2);
+	double p1y = prediction.at<float>(1)*prediction.at<float>(2);
+	double p1z = prediction.at<float>(2);
+	double p2x = prediction.at<float>(4)*prediction.at<float>(6);
+	double p2y = prediction.at<float>(5)*prediction.at<float>(6);
+	double p2z = prediction.at<float>(6);
+	double p3x = prediction.at<float>(8)*prediction.at<float>(10);
+	double p3y = prediction.at<float>(9)*prediction.at<float>(10);
+	double p3z = prediction.at<float>(10);
+	double p4x = prediction.at<float>(12)*prediction.at<float>(14);
+	double p4y = prediction.at<float>(13)*prediction.at<float>(14);
+	double p4z = prediction.at<float>(14);
+
+	cout << "Ponto 1: (" << p1x << ", " << p1y << ", " << p1z << ")" << endl;
+	cout << "Ponto 2: (" << p2x << ", " << p2y << ", " << p2z << ")" << endl;
+	cout << "Ponto 3: (" << p3x << ", " << p3y << ", " << p3z << ")" << endl;
+	cout << "Ponto 4: (" << p4x << ", " << p4y << ", " << p4z << ")" << endl;
+
 	return adjustedDistance;
 }
 

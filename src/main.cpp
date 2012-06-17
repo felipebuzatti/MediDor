@@ -177,7 +177,16 @@ void processFrame(Mat frame) {
 				if (i == 0) {
 					float points[] = {p1.x, p1.y,  p2.x, p2.y,  p3.x, p3.y,  p4.x, p4.y};
 					measurements = Mat(8, MAX_FRAMES, CV_32F);
-					measurements.col(0) = Mat(8, 1, CV_32F, points);
+					//measurements.col(0) = Mat(8, 1, CV_32F, points);
+					measurements.at<float>(0,0) = p1.x;
+					measurements.at<float>(1,0) = p1.y;
+					measurements.at<float>(2,0) = p2.x;
+					measurements.at<float>(3,0) = p2.y;
+					measurements.at<float>(4,0) = p3.x;
+					measurements.at<float>(5,0) = p3.y;
+					measurements.at<float>(6,0) = p4.x;
+					measurements.at<float>(7,0) = p4.y;
+					cout << measurements.at<float>(0,0) << ", " << measurements.at<float>(1,0) << " -> " << measurements.at<float>(2,0) << ", " << measurements.at<float>(3,0) << endl;
 					prevPoints.push_back(p1);
 					prevPoints.push_back(p2);
 					prevPoints.push_back(p3);
@@ -190,12 +199,21 @@ void processFrame(Mat frame) {
 					calcOpticalFlowPyrLK(capturedImages[i-1], capturedImages[i], prevPoints, newPoints, statusMat, errMat);
 
 					if( sum(statusMat)[0] == prevPoints.size() ) {
-						float points[] = {newPoints[0].x, newPoints[0].y,  newPoints[1].x, newPoints[1].y,  newPoints[2].x, newPoints[2].y,  newPoints[3].x, newPoints[3].y};
-						measurements.col(i) = Mat(8, 1, CV_32F, points);
-						cout << "Image "<< i << " OK." << endl;
+						//float points[] = {newPoints[0].x, newPoints[0].y,  newPoints[1].x, newPoints[1].y,  newPoints[2].x, newPoints[2].y,  newPoints[3].x, newPoints[3].y};
+						//measurements.col(i) = Mat(8, 1, CV_32F, points);
+						measurements.at<float>(0,i) = newPoints[0].x;
+						measurements.at<float>(1,i) = newPoints[0].y;
+						measurements.at<float>(2,i) = newPoints[1].x;
+						measurements.at<float>(3,i) = newPoints[1].y;
+						measurements.at<float>(4,i) = newPoints[2].x;
+						measurements.at<float>(5,i) = newPoints[2].y;
+						measurements.at<float>(6,i) = newPoints[3].x;
+						measurements.at<float>(7,i) = newPoints[3].y;
+						cout << measurements.at<float>(0,i) << ", " << measurements.at<float>(1,i) << " -> " << measurements.at<float>(2,i) << ", " << measurements.at<float>(3,i) << endl;
+						//cout << "Image "<< i << " OK." << endl;
 						for (int j = 0; j < newPoints.size(); ++j) {
 							cvtColor(capturedImages[i], imgFrame, COLOR_GRAY2RGBA, 4);
-							line(imgFrame, prevPoints[j], newPoints[j], Scalar(0, 200, 200, 1));
+							line(imgFrame, prevPoints[j], newPoints[j], Scalar(0, 0, 200, 1));
 							imshow(mainWindow, imgFrame);
 							waitKey(50);
 						}
