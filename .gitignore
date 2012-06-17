@@ -13,3 +13,6 @@
 
 # Build folder
 build/
+
+# gedit temp
+*~
